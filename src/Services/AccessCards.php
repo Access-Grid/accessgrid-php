@@ -34,8 +34,10 @@ class AccessCards
     /**
      * Update an existing access card
      */
-    public function update(string $cardId, array $data): AccessCard
+    public function update(array $data): AccessCard
     {
+        $cardId = $data['card_id'];
+        unset($data['card_id']);
         $response = $this->client->patch("/v1/key-cards/{$cardId}", $data);
         return new AccessCard($this->client, $response);
     }
@@ -74,32 +76,36 @@ class AccessCards
     /**
      * Suspend an access card
      */
-    public function suspend(string $cardId): AccessCard
+    public function suspend(array $data): AccessCard
     {
+        $cardId = $data['card_id'];
         return $this->manage($cardId, 'suspend');
     }
 
     /**
      * Resume a suspended access card
      */
-    public function resume(string $cardId): AccessCard
+    public function resume(array $data): AccessCard
     {
+        $cardId = $data['card_id'];
         return $this->manage($cardId, 'resume');
     }
 
     /**
      * Unlink an access card
      */
-    public function unlink(string $cardId): AccessCard
+    public function unlink(array $data): AccessCard
     {
+        $cardId = $data['card_id'];
         return $this->manage($cardId, 'unlink');
     }
 
     /**
      * Delete an access card
      */
-    public function delete(string $cardId): AccessCard
+    public function delete(array $data): AccessCard
     {
+        $cardId = $data['card_id'];
         return $this->manage($cardId, 'delete');
     }
 }

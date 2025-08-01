@@ -12,8 +12,8 @@ class AccessGridClient
     private string $accountId;
     private string $secretKey;
     private string $baseUrl;
-    private AccessCards $accessCards;
-    private Console $console;
+    public AccessCards $accessCards;
+    public Console $console;
 
     public function __construct(string $accountId, string $secretKey, string $baseUrl = 'https://api.accessgrid.com')
     {
