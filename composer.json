@@ -1,0 +1,43 @@
+{
+    "name": "accessgrid/accessgrid-php",
+    "description": "Official PHP SDK for AccessGrid API",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["accessgrid", "api", "sdk", "access-control", "nfc"],
+    "homepage": "https://github.com/accessgrid/accessgrid-php",
+    "authors": [
+        {
+            "name": "AccessGrid",
+            "email": "support@accessgrid.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "ext-hash": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0|^10.0",
+        "php-cs-fixer/shim": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "AccessGrid\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "AccessGrid\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "cs-fix": "php-cs-fixer fix"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
