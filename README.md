@@ -38,6 +38,18 @@ $card = $client->getAccessCards()->issue([
 
 echo "Card issued: " . $card->id . "\n";
 
+// Get a specific card
+$card = $client->getAccessCards()->get('0xc4rd1d');
+echo "Card ID: " . $card->id . "\n";
+echo "State: " . $card->state . "\n";
+echo "Full Name: " . $card->full_name . "\n";
+echo "Install URL: " . $card->install_url . "\n";
+echo "Expiration Date: " . $card->expiration_date . "\n";
+echo "Card Number: " . $card->card_number . "\n";
+echo "Site Code: " . $card->site_code . "\n";
+echo "Devices: " . count($card->devices) . "\n";
+echo "Metadata: " . json_encode($card->metadata) . "\n";
+
 // List cards for a template
 $cards = $client->getAccessCards()->list('your-template-id');
 foreach ($cards as $card) {
@@ -69,6 +81,7 @@ Access the access cards service via `$client->getAccessCards()`.
 
 - `issue(array $data): AccessCard` - Issue a new access card
 - `provision(array $data): AccessCard` - Alias for issue()
+- `get(string $cardId): AccessCard` - Get details about a specific access card
 - `update(string $cardId, array $data): AccessCard` - Update an existing card
 - `list(string $templateId, ?string $state = null): AccessCard[]` - List cards for a template
 - `suspend(string $cardId): AccessCard` - Suspend a card

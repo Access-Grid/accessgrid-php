@@ -32,6 +32,15 @@ class AccessCards
     }
 
     /**
+     * Get details about a specific access card
+     */
+    public function get(string $cardId): AccessCard
+    {
+        $response = $this->client->get("/v1/key-cards/{$cardId}");
+        return new AccessCard($this->client, $response);
+    }
+
+    /**
      * Update an existing access card
      */
     public function update(array $data): AccessCard
