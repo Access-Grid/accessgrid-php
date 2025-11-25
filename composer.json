@@ -4,7 +4,7 @@
     "type": "library",
     "license": "MIT",
     "keywords": ["accessgrid", "api", "sdk", "access-control", "nfc"],
-    "homepage": "https://github.com/accessgrid/accessgrid-php",
+    "homepage": "https://github.com/access-grid/accessgrid-php",
     "authors": [
         {
             "name": "AccessGrid",
