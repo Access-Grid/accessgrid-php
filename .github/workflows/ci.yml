@@ -26,8 +26,17 @@ jobs:
           extensions: curl, json, hash
           coverage: none
 
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/composer-cache
+          key: php-${{ matrix.php-version }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: php-${{ matrix.php-version }}-composer-
+
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
+        env:
+          COMPOSER_CACHE_DIR: ${{ runner.temp }}/composer-cache
 
       - name: Run tests
         run: composer test
