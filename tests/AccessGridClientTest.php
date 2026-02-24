@@ -2,19 +2,12 @@
 
 namespace AccessGrid\Tests;
 
-use PHPUnit\Framework\TestCase;
 use AccessGrid\AccessGridClient;
 use AccessGrid\Exceptions\AccessGridException;
 use AccessGrid\Exceptions\AuthenticationException;
 
 class AccessGridClientTest extends TestCase
 {
-    private AccessGridClient $client;
-
-    protected function setUp(): void
-    {
-        $this->client = new AccessGridClient('test-account-id', 'test-secret-key');
-    }
 
     public function testConstructorThrowsExceptionForEmptyAccountId(): void
     {
