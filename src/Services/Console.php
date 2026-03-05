@@ -4,6 +4,7 @@ namespace AccessGrid\Services;
 
 use AccessGrid\AccessGridClient;
 use AccessGrid\Models\Template;
+use AccessGrid\Models\PassTemplatePair;
 
 class Console
 {
@@ -68,6 +69,23 @@ class Console
         return array_map(function ($item) {
             return (object) $item;
         }, $events);
+    }
+
+    /**
+     * List pass template pairs
+     */
+    public function listPassTemplatePairs(array $params = []): array
+    {
+        $response = $this->client->get('/v1/console/pass-template-pairs', $params);
+
+        if (isset($response['pass_template_pairs'])) {
+            $response['pass_template_pairs'] = array_map(
+                fn($pair) => new PassTemplatePair($this->client, $pair),
+                $response['pass_template_pairs']
+            );
+        }
+
+        return $response;
     }
 
     /**
