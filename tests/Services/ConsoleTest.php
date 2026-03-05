@@ -6,6 +6,9 @@ use AccessGrid\Tests\TestCase;
 use AccessGrid\Models\Template;
 use AccessGrid\Models\PassTemplatePair;
 use AccessGrid\Models\TemplateInfo;
+use AccessGrid\Models\LedgerItem;
+use AccessGrid\Models\LedgerItemAccessPass;
+use AccessGrid\Models\LedgerItemPassTemplate;
 
 class ConsoleTest extends TestCase
 {
@@ -269,5 +272,134 @@ class ConsoleTest extends TestCase
         $result = $this->client->console->listPassTemplatePairs();
 
         $this->assertCount(0, $result['pass_template_pairs']);
+    }
+
+    public function testListLedgerItems(): void
+    {
+        $this->expectRequest('GET', '/v1/console/ledger-items', 200, [
+            'ledger_items' => [
+                [
+                    'created_at' => '2025-06-15T10:30:00Z',
+                    'amount' => 1.50,
+                    'id' => 'li_123',
+                    'ex_id' => 'li_123',
+                    'kind' => 'access_pass_issued',
+                    'metadata' => ['access_pass_ex_id' => 'pass_456'],
+                    'access_pass' => [
+                        'id' => 'pass_456',
+                        'ex_id' => 'pass_456',
+                        'full_name' => 'Jane Doe',
+                        'state' => 'active',
+                        'metadata' => [],
+                        'pass_template' => [
+                            'id' => 'tmpl_abc',
+                            'ex_id' => 'tmpl_abc',
+                            'name' => 'Employee Badge',
+                            'protocol' => 'desfire',
+                            'platform' => 'apple',
+                            'use_case' => 'employee_badge',
+                        ],
+                    ],
+                ],
+            ],
+            'pagination' => [
+                'current_page' => 1,
+                'per_page' => 50,
+                'total_pages' => 1,
+                'total_count' => 1,
+            ],
+        ]);
+
+        $result = $this->client->console->listLedgerItems();
+
+        $this->assertArrayHasKey('ledger_items', $result);
+        $this->assertArrayHasKey('pagination', $result);
+        $this->assertCount(1, $result['ledger_items']);
+
+        $item = $result['ledger_items'][0];
+        $this->assertInstanceOf(LedgerItem::class, $item);
+        $this->assertEquals('li_123', $item->id);
+        $this->assertEquals(1.50, $item->amount);
+        $this->assertEquals('access_pass_issued', $item->kind);
+
+        $this->assertInstanceOf(LedgerItemAccessPass::class, $item->accessPass);
+        $this->assertEquals('pass_456', $item->accessPass->id);
+        $this->assertEquals('Jane Doe', $item->accessPass->fullName);
+
+        $this->assertInstanceOf(LedgerItemPassTemplate::class, $item->accessPass->passTemplate);
+        $this->assertEquals('tmpl_abc', $item->accessPass->passTemplate->id);
+        $this->assertEquals('Employee Badge', $item->accessPass->passTemplate->name);
+
+        $this->assertEquals(1, $result['pagination']['current_page']);
+    }
+
+    public function testListLedgerItemsWithParams(): void
+    {
+        $this->mockHttpClient
+            ->expects($this->once())
+            ->method('send')
+            ->with(
+                $this->equalTo('GET'),
+                $this->callback(function (string $url) {
+                    return strpos($url, '/v1/console/ledger-items') !== false
+                        && strpos($url, 'page=2') !== false
+                        && strpos($url, 'per_page=10') !== false
+                        && strpos($url, 'start_date=2025-01-01T00%3A00%3A00Z') !== false
+                        && strpos($url, 'end_date=2025-06-30T23%3A59%3A59Z') !== false;
+                }),
+                $this->anything(),
+                $this->anything()
+            )
+            ->willReturn(new \AccessGrid\Http\HttpResponse(200, json_encode([
+                'ledger_items' => [],
+                'pagination' => ['current_page' => 2, 'per_page' => 10, 'total_pages' => 5, 'total_count' => 42],
+            ])));
+
+        $result = $this->client->console->listLedgerItems([
+            'page' => 2,
+            'per_page' => 10,
+            'start_date' => '2025-01-01T00:00:00Z',
+            'end_date' => '2025-06-30T23:59:59Z',
+        ]);
+
+        $this->assertArrayHasKey('ledger_items', $result);
+        $this->assertCount(0, $result['ledger_items']);
+        $this->assertEquals(2, $result['pagination']['current_page']);
+    }
+
+    public function testListLedgerItemsWithNullAccessPass(): void
+    {
+        $this->expectRequest('GET', '/v1/console/ledger-items', 200, [
+            'ledger_items' => [
+                [
+                    'created_at' => '2025-06-15T10:30:00Z',
+                    'amount' => 0.75,
+                    'id' => 'li_no_pass',
+                    'ex_id' => 'li_no_pass',
+                    'kind' => 'adjustment',
+                    'metadata' => [],
+                    'access_pass' => null,
+                ],
+            ],
+            'pagination' => ['current_page' => 1, 'per_page' => 50, 'total_pages' => 1, 'total_count' => 1],
+        ]);
+
+        $result = $this->client->console->listLedgerItems();
+
+        $item = $result['ledger_items'][0];
+        $this->assertInstanceOf(LedgerItem::class, $item);
+        $this->assertNull($item->accessPass);
+    }
+
+    public function testListLedgerItemsEmpty(): void
+    {
+        $this->expectRequest('GET', '/v1/console/ledger-items', 200, [
+            'ledger_items' => [],
+            'pagination' => ['current_page' => 1, 'per_page' => 50, 'total_pages' => 0, 'total_count' => 0],
+        ]);
+
+        $result = $this->client->console->listLedgerItems();
+
+        $this->assertCount(0, $result['ledger_items']);
     }
 }

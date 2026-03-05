@@ -5,6 +5,7 @@ namespace AccessGrid\Services;
 use AccessGrid\AccessGridClient;
 use AccessGrid\Models\Template;
 use AccessGrid\Models\PassTemplatePair;
+use AccessGrid\Models\LedgerItem;
 
 class Console
 {
@@ -82,6 +83,23 @@ class Console
             $response['pass_template_pairs'] = array_map(
                 fn($pair) => new PassTemplatePair($this->client, $pair),
                 $response['pass_template_pairs']
+            );
+        }
+
+        return $response;
+    }
+
+    /**
+     * List ledger items
+     */
+    public function listLedgerItems(array $params = []): array
+    {
+        $response = $this->client->get('/v1/console/ledger-items', $params);
+
+        if (isset($response['ledger_items'])) {
+            $response['ledger_items'] = array_map(
+                fn($item) => new LedgerItem($this->client, $item),
+                $response['ledger_items']
             );
         }
 
