@@ -16,7 +16,7 @@ class LedgerItemPassTemplate
     public function __construct(AccessGridClient $client, array $data)
     {
         $this->client = $client;
-        $this->id = $data['ex_id'] ?? null;
+        $this->id = $data['id'] ?? null;
         $this->name = $data['name'] ?? null;
         $this->protocol = $data['protocol'] ?? null;
         $this->platform = $data['platform'] ?? null;

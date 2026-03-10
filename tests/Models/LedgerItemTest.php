@@ -133,40 +133,40 @@ class LedgerItemTest extends TestCase
         $this->assertNull($item->accessPass);
     }
 
-    public function testIdReadsFromExId(): void
+    public function testIdReadsFromId(): void
     {
         $item = new LedgerItem($this->client, [
-            'ex_id' => 'li_from_ex_id',
+            'id' => 'li_123',
         ]);
 
-        $this->assertEquals('li_from_ex_id', $item->id);
+        $this->assertEquals('li_123', $item->id);
     }
 
-    public function testAccessPassIdReadsFromExId(): void
+    public function testAccessPassIdReadsFromId(): void
     {
         $item = new LedgerItem($this->client, [
             'access_pass' => [
-                'ex_id' => 'pass_from_ex_id',
+                'id' => 'pass_123',
                 'full_name' => 'Test User',
                 'state' => 'active',
             ],
         ]);
 
-        $this->assertEquals('pass_from_ex_id', $item->accessPass->id);
+        $this->assertEquals('pass_123', $item->accessPass->id);
     }
 
-    public function testPassTemplateIdReadsFromExId(): void
+    public function testPassTemplateIdReadsFromId(): void
     {
         $item = new LedgerItem($this->client, [
             'access_pass' => [
-                'ex_id' => 'pass_123',
+                'id' => 'pass_123',
                 'pass_template' => [
-                    'ex_id' => 'tmpl_from_ex_id',
+                    'id' => 'tmpl_456',
                     'name' => 'Badge',
                 ],
             ],
         ]);
 
-        $this->assertEquals('tmpl_from_ex_id', $item->accessPass->passTemplate->id);
+        $this->assertEquals('tmpl_456', $item->accessPass->passTemplate->id);
     }
 }

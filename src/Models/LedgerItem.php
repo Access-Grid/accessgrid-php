@@ -17,7 +17,7 @@ class LedgerItem
     public function __construct(AccessGridClient $client, array $data)
     {
         $this->client = $client;
-        $this->id = $data['ex_id'] ?? null;
+        $this->id = $data['id'] ?? null;
         $this->createdAt = $data['created_at'] ?? null;
         $this->amount = $data['amount'] ?? null;
         $this->kind = $data['kind'] ?? null;
