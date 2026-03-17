@@ -75,7 +75,7 @@ class AccessGridClient
         
         // Extract resource ID from the endpoint if needed for signature
         $resourceId = null;
-        if ($method === 'GET' || ($method === 'POST' && (empty($data) || $data === []))) {
+        if ($method === 'GET' || $method === 'DELETE' || ($method === 'POST' && (empty($data) || $data === []))) {
             // Extract the ID from the endpoint - patterns like /resource/{id} or /resource/{id}/action
             $parts = array_filter(explode('/', trim($endpoint, '/')));
             if (count($parts) >= 2) {
@@ -93,7 +93,7 @@ class AccessGridClient
         // Special handling for requests with no payload:
         // 1. POST requests with empty body (like unlink/suspend/resume)
         // 2. GET requests
-        if (($method === 'POST' && empty($data)) || $method === 'GET') {
+        if (($method === 'POST' && empty($data)) || $method === 'GET' || $method === 'DELETE') {
             // For these requests, use {"id": "card_id"} as the payload for signature generation
             if ($resourceId) {
                 $payload = json_encode(['id' => $resourceId]);
@@ -117,7 +117,7 @@ class AccessGridClient
 
         // For requests with empty bodies (GET or action endpoints like unlink/suspend/resume),
         // we need to include the sig_payload parameter
-        if ($method === 'GET' || ($method === 'POST' && empty($data))) {
+        if ($method === 'GET' || $method === 'DELETE' || ($method === 'POST' && empty($data))) {
             if ($params === null) {
                 $params = [];
             }
@@ -156,6 +156,10 @@ class AccessGridClient
             throw new AccessGridException('API request failed: ' . $errorMessage);
         }
 
+        if ($responseBody === '' || $responseBody === null) {
+            return [];
+        }
+
         $decoded = json_decode($responseBody, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new AccessGridException('Invalid JSON response: ' . json_last_error_msg());
@@ -182,5 +186,10 @@ class AccessGridClient
     public function patch(string $endpoint, array $data): array
     {
         return $this->makeRequest('PATCH', $endpoint, $data);
+    }
+
+    public function delete(string $endpoint): array
+    {
+        return $this->makeRequest('DELETE', $endpoint);
     }
 }

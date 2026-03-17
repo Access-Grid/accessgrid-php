@@ -9,6 +9,7 @@ use AccessGrid\Models\TemplateInfo;
 use AccessGrid\Models\LedgerItem;
 use AccessGrid\Models\LedgerItemAccessPass;
 use AccessGrid\Models\LedgerItemPassTemplate;
+use AccessGrid\Models\Webhook;
 
 class ConsoleTest extends TestCase
 {
@@ -401,5 +402,154 @@ class ConsoleTest extends TestCase
         $result = $this->client->console->listLedgerItems();
 
         $this->assertCount(0, $result['ledger_items']);
+    }
+
+    // --- Webhooks ---
+
+    public function testListWebhooks(): void
+    {
+        $this->expectRequest('GET', '/v1/console/webhooks', 200, [
+            'webhooks' => [
+                [
+                    'id' => 'wh_abc123',
+                    'name' => 'My Webhook',
+                    'url' => 'https://example.com/webhook',
+                    'auth_method' => 'bearer_token',
+                    'subscribed_events' => ['ag.access_pass.issued', 'ag.access_pass.activated'],
+                    'created_at' => '2025-06-01T12:00:00Z',
+                ],
+                [
+                    'id' => 'wh_def456',
+                    'name' => 'mTLS Webhook',
+                    'url' => 'https://secure.example.com/webhook',
+                    'auth_method' => 'mtls',
+                    'subscribed_events' => ['ag.card_template.created'],
+                    'created_at' => '2025-06-02T12:00:00Z',
+                    'cert_expires_at' => '2025-12-02T12:00:00Z',
+                ],
+            ],
+            'pagination' => [
+                'current_page' => 1,
+                'per_page' => 50,
+                'total_pages' => 1,
+                'total_count' => 2,
+            ],
+        ]);
+
+        $result = $this->client->console->listWebhooks();
+
+        $this->assertArrayHasKey('webhooks', $result);
+        $this->assertArrayHasKey('pagination', $result);
+        $this->assertCount(2, $result['webhooks']);
+
+        $wh = $result['webhooks'][0];
+        $this->assertInstanceOf(Webhook::class, $wh);
+        $this->assertEquals('wh_abc123', $wh->id);
+        $this->assertEquals('My Webhook', $wh->name);
+        $this->assertEquals('bearer_token', $wh->authMethod);
+        $this->assertCount(2, $wh->subscribedEvents);
+
+        $wh2 = $result['webhooks'][1];
+        $this->assertInstanceOf(Webhook::class, $wh2);
+        $this->assertEquals('mtls', $wh2->authMethod);
+        $this->assertEquals('2025-12-02T12:00:00Z', $wh2->certExpiresAt);
+
+        $this->assertEquals(1, $result['pagination']['current_page']);
+        $this->assertEquals(2, $result['pagination']['total_count']);
+    }
+
+    public function testListWebhooksWithPagination(): void
+    {
+        $this->mockHttpClient
+            ->expects($this->once())
+            ->method('send')
+            ->with(
+                $this->equalTo('GET'),
+                $this->callback(function (string $url) {
+                    return strpos($url, '/v1/console/webhooks') !== false
+                        && strpos($url, 'page=2') !== false
+                        && strpos($url, 'per_page=10') !== false;
+                }),
+                $this->anything(),
+                $this->anything()
+            )
+            ->willReturn(new \AccessGrid\Http\HttpResponse(200, json_encode([
+                'webhooks' => [],
+                'pagination' => ['current_page' => 2, 'per_page' => 10, 'total_pages' => 3, 'total_count' => 25],
+            ])));
+
+        $result = $this->client->console->listWebhooks(['page' => 2, 'per_page' => 10]);
+
+        $this->assertCount(0, $result['webhooks']);
+        $this->assertEquals(2, $result['pagination']['current_page']);
+    }
+
+    public function testCreateWebhookBearerToken(): void
+    {
+        $this->expectRequest('POST', '/v1/console/webhooks', 201, [
+            'id' => 'wh_new123',
+            'name' => 'New Webhook',
+            'url' => 'https://example.com/hook',
+            'auth_method' => 'bearer_token',
+            'subscribed_events' => ['ag.access_pass.issued'],
+            'created_at' => '2025-06-15T10:00:00Z',
+            'private_key' => 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2',
+        ]);
+
+        $webhook = $this->client->console->createWebhook([
+            'name' => 'New Webhook',
+            'url' => 'https://example.com/hook',
+            'auth_method' => 'bearer_token',
+            'subscribed_events' => ['ag.access_pass.issued'],
+        ]);
+
+        $this->assertInstanceOf(Webhook::class, $webhook);
+        $this->assertEquals('wh_new123', $webhook->id);
+        $this->assertEquals('bearer_token', $webhook->authMethod);
+        $this->assertEquals('a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2', $webhook->privateKey);
+        $this->assertNull($webhook->clientCert);
+    }
+
+    public function testCreateWebhookMtls(): void
+    {
+        $this->expectRequest('POST', '/v1/console/webhooks', 201, [
+            'id' => 'wh_mtls123',
+            'name' => 'Secure Webhook',
+            'url' => 'https://secure.example.com/hook',
+            'auth_method' => 'mtls',
+            'subscribed_events' => ['ag.access_pass.issued', 'ag.access_pass.deleted'],
+            'created_at' => '2025-06-15T10:00:00Z',
+            'client_cert' => '-----BEGIN CERTIFICATE-----\nMIIB...\n-----END CERTIFICATE-----',
+            'cert_expires_at' => '2025-12-15T10:00:00Z',
+        ]);
+
+        $webhook = $this->client->console->createWebhook([
+            'name' => 'Secure Webhook',
+            'url' => 'https://secure.example.com/hook',
+            'auth_method' => 'mtls',
+            'subscribed_events' => ['ag.access_pass.issued', 'ag.access_pass.deleted'],
+        ]);
+
+        $this->assertInstanceOf(Webhook::class, $webhook);
+        $this->assertEquals('mtls', $webhook->authMethod);
+        $this->assertEquals('-----BEGIN CERTIFICATE-----\nMIIB...\n-----END CERTIFICATE-----', $webhook->clientCert);
+        $this->assertEquals('2025-12-15T10:00:00Z', $webhook->certExpiresAt);
+        $this->assertNull($webhook->privateKey);
+    }
+
+    public function testDeleteWebhook(): void
+    {
+        $this->mockHttpClient
+            ->expects($this->once())
+            ->method('send')
+            ->with(
+                $this->equalTo('DELETE'),
+                $this->stringContains('/v1/console/webhooks/wh_abc123'),
+                $this->isType('array'),
+                $this->anything()
+            )
+            ->willReturn(new \AccessGrid\Http\HttpResponse(204, ''));
+
+        $this->client->console->deleteWebhook('wh_abc123');
     }
 }
