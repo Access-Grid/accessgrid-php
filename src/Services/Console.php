@@ -11,10 +11,12 @@ use AccessGrid\Models\Webhook;
 class Console
 {
     private AccessGridClient $client;
+    public HID $hid;
 
     public function __construct(AccessGridClient $client)
     {
         $this->client = $client;
+        $this->hid = new HID($client);
     }
 
     /**
