@@ -23,6 +23,7 @@ class TemplateTest extends TestCase
             'support_settings' => ['support_email' => 'help@example.com'],
             'terms_settings' => ['privacy_policy_url' => 'https://example.com/privacy'],
             'style_settings' => ['background_color' => '#FFFFFF'],
+            'metadata' => ['version' => '2.1'],
         ];
 
         $template = new Template($this->client, $data);
@@ -40,6 +41,14 @@ class TemplateTest extends TestCase
         $this->assertEquals('help@example.com', $template->supportSettings['support_email']);
         $this->assertEquals('https://example.com/privacy', $template->termsSettings['privacy_policy_url']);
         $this->assertEquals('#FFFFFF', $template->styleSettings['background_color']);
+        $this->assertEquals(['version' => '2.1'], $template->metadata);
+
+        // snake_case aliases
+        $this->assertEquals('employee_badge', $template->use_case);
+        $this->assertEquals('2025-01-01T00:00:00Z', $template->created_at);
+        $this->assertEquals('2025-06-01T00:00:00Z', $template->last_published_at);
+        $this->assertEquals(100, $template->issued_keys_count);
+        $this->assertEquals(85, $template->active_keys_count);
     }
 
     public function testConstructionWithMinimalData(): void
@@ -58,6 +67,31 @@ class TemplateTest extends TestCase
         $this->assertNull($template->lastPublishedAt);
         $this->assertNull($template->issuedKeysCount);
         $this->assertNull($template->activeKeysCount);
+    }
+
+    public function testConvenienceDeviceCountAccessors(): void
+    {
+        $template = new Template($this->client, [
+            'allowed_device_counts' => [
+                'allow_on_multiple_devices' => true,
+                'watch' => 2,
+                'iphone' => 3,
+            ],
+        ]);
+
+        $this->assertTrue($template->allow_on_multiple_devices);
+        $this->assertEquals(2, $template->watch_count);
+        $this->assertEquals(3, $template->iphone_count);
+    }
+
+    public function testConvenienceAccessorsNullWhenMissing(): void
+    {
+        $template = new Template($this->client, []);
+
+        $this->assertNull($template->allow_on_multiple_devices);
+        $this->assertNull($template->watch_count);
+        $this->assertNull($template->iphone_count);
+        $this->assertNull($template->metadata);
     }
 
     public function testNullableArrayProperties(): void
