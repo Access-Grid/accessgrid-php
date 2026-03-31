@@ -20,6 +20,19 @@ class Template
     public ?array $supportSettings;
     public ?array $termsSettings;
     public ?array $styleSettings;
+    public ?array $metadata;
+
+    // Convenience accessors (snake_case aliases)
+    public ?string $use_case;
+    public ?string $created_at;
+    public ?string $last_published_at;
+    public ?int $issued_keys_count;
+    public ?int $active_keys_count;
+
+    // Convenience accessors extracted from nested objects
+    public ?bool $allow_on_multiple_devices;
+    public ?int $watch_count;
+    public ?int $iphone_count;
 
     public function __construct(AccessGridClient $client, array $data)
     {
@@ -37,5 +50,18 @@ class Template
         $this->supportSettings = $data['support_settings'] ?? null;
         $this->termsSettings = $data['terms_settings'] ?? null;
         $this->styleSettings = $data['style_settings'] ?? null;
+        $this->metadata = $data['metadata'] ?? null;
+
+        // snake_case aliases
+        $this->use_case = $this->useCase;
+        $this->created_at = $this->createdAt;
+        $this->last_published_at = $this->lastPublishedAt;
+        $this->issued_keys_count = $this->issuedKeysCount;
+        $this->active_keys_count = $this->activeKeysCount;
+
+        // Convenience accessors from nested objects
+        $this->allow_on_multiple_devices = $this->allowedDeviceCounts['allow_on_multiple_devices'] ?? null;
+        $this->watch_count = $this->allowedDeviceCounts['watch'] ?? null;
+        $this->iphone_count = $this->allowedDeviceCounts['iphone'] ?? null;
     }
 }

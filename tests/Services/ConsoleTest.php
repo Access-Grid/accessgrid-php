@@ -170,7 +170,7 @@ class ConsoleTest extends TestCase
 
     public function testIosPreflight(): void
     {
-        $this->expectRequest('POST', '/v1/console/ios-preflight', 200, [
+        $this->expectRequest('POST', '/v1/console/card-templates/tmpl_123/ios_preflight', 200, [
             'provisioningCredentialIdentifier' => 'prov_123',
             'sharingInstanceIdentifier' => 'share_456',
             'cardTemplateIdentifier' => 'tmpl_123',
@@ -402,6 +402,60 @@ class ConsoleTest extends TestCase
         $result = $this->client->console->listLedgerItems();
 
         $this->assertCount(0, $result['ledger_items']);
+    }
+
+    public function testLedgerItemsAlias(): void
+    {
+        $this->expectRequest('GET', '/v1/console/ledger-items', 200, [
+            'ledger_items' => [
+                [
+                    'created_at' => '2025-06-15T10:30:00Z',
+                    'amount' => 1.50,
+                    'id' => 'li_alias',
+                    'ex_id' => 'li_alias',
+                    'kind' => 'access_pass_issued',
+                    'metadata' => [],
+                    'access_pass' => null,
+                ],
+            ],
+            'pagination' => [
+                'current_page' => 1,
+                'per_page' => 50,
+                'total_pages' => 1,
+                'total_count' => 1,
+            ],
+        ]);
+
+        $result = $this->client->console->ledgerItems();
+
+        $this->assertArrayHasKey('ledger_items', $result);
+        $this->assertCount(1, $result['ledger_items']);
+        $this->assertInstanceOf(LedgerItem::class, $result['ledger_items'][0]);
+    }
+
+    public function testReadTemplateWithConvenienceFields(): void
+    {
+        $this->expectRequest('GET', '/v1/console/card-templates/tmpl_conv', 200, [
+            'id' => 'tmpl_conv',
+            'name' => 'Convenience Test',
+            'platform' => 'apple',
+            'protocol' => 'desfire',
+            'allowed_device_counts' => [
+                'allow_on_multiple_devices' => true,
+                'watch' => 2,
+                'iphone' => 3,
+            ],
+            'metadata' => ['version' => '2.1'],
+        ]);
+
+        $template = $this->client->console->readTemplate([
+            'card_template_id' => 'tmpl_conv',
+        ]);
+
+        $this->assertTrue($template->allow_on_multiple_devices);
+        $this->assertEquals(2, $template->watch_count);
+        $this->assertEquals(3, $template->iphone_count);
+        $this->assertEquals(['version' => '2.1'], $template->metadata);
     }
 
     // --- Webhooks ---
