@@ -11,10 +11,12 @@ use AccessGrid\Models\Webhook;
 class Console
 {
     private AccessGridClient $client;
+    public HID $hid;
 
     public function __construct(AccessGridClient $client)
     {
         $this->client = $client;
+        $this->hid = new HID($client);
     }
 
     /**
@@ -91,6 +93,14 @@ class Console
     }
 
     /**
+     * List ledger items (alias matching doc examples)
+     */
+    public function ledgerItems(array $params = []): array
+    {
+        return $this->listLedgerItems($params);
+    }
+
+    /**
      * List ledger items
      */
     public function listLedgerItems(array $params = []): array
@@ -146,7 +156,9 @@ class Console
      */
     public function iosPreflight(array $data): object
     {
-        $response = $this->client->post('/v1/console/ios-preflight', $data);
+        $templateId = $data['card_template_id'];
+        $body = array_diff_key($data, ['card_template_id' => true]);
+        $response = $this->client->post("/v1/console/card-templates/{$templateId}/ios_preflight", $body);
         return (object) $response;
     }
 }
