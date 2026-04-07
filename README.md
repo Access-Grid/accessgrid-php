@@ -41,11 +41,16 @@ $card = $client->accessCards->provision([
     'card_template_id' => '0xd3adb00b5',
     'employee_id' => '123456789',
     'tag_id' => 'DDEADB33FB00B5',
-    'allow_on_multiple_devices' => true,
     'full_name' => 'Employee name',
     'email' => 'employee@yourwebsite.com',
     'phone_number' => '+19547212241',
     'classification' => 'full_time',
+    'department' => 'Engineering',
+    'location' => 'San Francisco',
+    'site_name' => 'HQ Building A',
+    'workstation' => '4F-207',
+    'mail_stop' => 'MS-401',
+    'company_address' => '123 Main St, San Francisco, CA 94105',
     'start_date' => (new DateTime('now', new DateTimeZone('UTC')))->format('c'),
     'expiration_date' => '2026-04-01T00:00:00.000Z',
     'employee_photo' => '[image_in_base64_encoded_format]',
@@ -83,6 +88,12 @@ $card = $client->accessCards->update([
    'employee_id' => '987654321',
    'full_name' => 'Updated Employee Name',
    'classification' => 'contractor',
+   'department' => 'Marketing',
+   'location' => 'New York',
+   'site_name' => 'NYC Office',
+   'workstation' => '2F-105',
+   'mail_stop' => 'MS-200',
+   'company_address' => '456 Broadway, New York, NY 10013',
    'expiration_date' => (new DateTime('now', new DateTimeZone('UTC')))->modify('+3 months')->format('c'),
    'employee_photo' => '[image_in_base64_encoded_format]',
    'title' => 'Senior Developer'
@@ -277,6 +288,67 @@ $result = $client->console->hid->orgs->activate([
 ]);
 ```
 
+### Landing Pages
+
+```php
+// List all landing pages
+$landingPages = $client->console->listLandingPages();
+
+foreach ($landingPages as $page) {
+    echo "ID: {$page->id}, Name: {$page->name}, Kind: {$page->kind}\n";
+    echo "  Password Protected: {$page->password_protected}\n";
+    if ($page->logo_url) {
+        echo "  Logo URL: {$page->logo_url}\n";
+    }
+}
+
+// Create a landing page
+$landingPage = $client->console->createLandingPage([
+    'name' => 'Miami Office Access Pass',
+    'kind' => 'universal',
+    'additional_text' => 'Welcome to the Miami Office',
+    'bg_color' => '#f1f5f9',
+    'allow_immediate_download' => true
+]);
+
+echo "Landing page created: {$landingPage->id}\n";
+echo "Name: {$landingPage->name}, Kind: {$landingPage->kind}\n";
+
+// Update a landing page
+$landingPage = $client->console->updateLandingPage('0xlandingpage1d', [
+    'name' => 'Updated Miami Office Access Pass',
+    'additional_text' => 'Welcome! Tap below to get your access pass.',
+    'bg_color' => '#e2e8f0'
+]);
+
+echo "Landing page updated: {$landingPage->id}\n";
+echo "Name: {$landingPage->name}\n";
+```
+
+### Credential Profiles
+
+```php
+// List all credential profiles
+$profiles = $client->console->credentialProfiles->list();
+
+foreach ($profiles as $profile) {
+    echo "ID: {$profile->id}, Name: {$profile->name}, AID: {$profile->aid}\n";
+}
+
+// Create a credential profile
+$profile = $client->console->credentialProfiles->create([
+    'name' => 'Main Office Profile',
+    'app_name' => 'KEY-ID-main',
+    'keys' => [
+        ['value' => 'your_32_char_hex_master_key_here'],
+        ['value' => 'your_32_char_hex__read_key__here']
+    ]
+]);
+
+echo "Profile created: {$profile->id}\n";
+echo "AID: {$profile->aid}\n";
+```
+
 ## Error Handling
 
 ```php
@@ -312,5 +384,10 @@ MIT License
 | GET /v1/console/pass-template-pairs | Y |
 | GET /v1/console/ledger-items | Y |
 | POST /v1/console/ios-preflight | Y |
+| GET /v1/console/landing-pages | Y |
+| POST /v1/console/landing-pages | Y |
+| PATCH /v1/console/landing-pages/{id} | Y |
+| GET /v1/console/credential-profiles | Y |
+| POST /v1/console/credential-profiles | Y |
 | Webhooks (list/create/delete) | Y |
 | HID orgs (create/activate/list) | Y |
