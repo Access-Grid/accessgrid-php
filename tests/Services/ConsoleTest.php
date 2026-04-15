@@ -190,19 +190,22 @@ class ConsoleTest extends TestCase
 
     public function testListPassTemplatePairs(): void
     {
-        $this->expectRequest('GET', '/v1/console/pass-template-pairs', 200, [
-            'pass_template_pairs' => [
+        $this->expectRequest('GET', '/v1/console/card-template-pairs', 200, [
+            'card_template_pairs' => [
                 [
                     'id' => 'pair_123',
+                    'ex_id' => 'pair_123',
                     'name' => 'Employee Badge Pair',
                     'created_at' => '2025-01-01T00:00:00Z',
                     'android_template' => [
                         'id' => 'tmpl_android_456',
+                        'ex_id' => 'tmpl_android_456',
                         'name' => 'Employee Badge Android',
                         'platform' => 'android',
                     ],
                     'ios_template' => [
                         'id' => 'tmpl_ios_789',
+                        'ex_id' => 'tmpl_ios_789',
                         'name' => 'Employee Badge iOS',
                         'platform' => 'apple',
                     ],
@@ -219,16 +222,19 @@ class ConsoleTest extends TestCase
         $result = $this->client->console->listPassTemplatePairs();
 
         $this->assertArrayHasKey('pass_template_pairs', $result);
+        $this->assertArrayNotHasKey('card_template_pairs', $result);
         $this->assertArrayHasKey('pagination', $result);
         $this->assertCount(1, $result['pass_template_pairs']);
 
         $pair = $result['pass_template_pairs'][0];
         $this->assertInstanceOf(PassTemplatePair::class, $pair);
         $this->assertEquals('pair_123', $pair->id);
+        $this->assertEquals('pair_123', $pair->exId);
         $this->assertEquals('Employee Badge Pair', $pair->name);
 
         $this->assertInstanceOf(TemplateInfo::class, $pair->androidTemplate);
         $this->assertEquals('tmpl_android_456', $pair->androidTemplate->id);
+        $this->assertEquals('tmpl_android_456', $pair->androidTemplate->exId);
 
         $this->assertInstanceOf(TemplateInfo::class, $pair->iosTemplate);
         $this->assertEquals('tmpl_ios_789', $pair->iosTemplate->id);
@@ -244,7 +250,7 @@ class ConsoleTest extends TestCase
             ->with(
                 $this->equalTo('GET'),
                 $this->callback(function (string $url) {
-                    return strpos($url, '/v1/console/pass-template-pairs') !== false
+                    return strpos($url, '/v1/console/card-template-pairs') !== false
                         && strpos($url, 'page=2') !== false
                         && strpos($url, 'per_page=10') !== false;
                 }),
@@ -252,7 +258,7 @@ class ConsoleTest extends TestCase
                 $this->anything()
             )
             ->willReturn(new \AccessGrid\Http\HttpResponse(200, json_encode([
-                'pass_template_pairs' => [],
+                'card_template_pairs' => [],
                 'pagination' => ['current_page' => 2, 'per_page' => 10, 'total_pages' => 3, 'total_count' => 25],
             ])));
 
@@ -265,14 +271,49 @@ class ConsoleTest extends TestCase
 
     public function testListPassTemplatePairsEmpty(): void
     {
-        $this->expectRequest('GET', '/v1/console/pass-template-pairs', 200, [
-            'pass_template_pairs' => [],
+        $this->expectRequest('GET', '/v1/console/card-template-pairs', 200, [
+            'card_template_pairs' => [],
             'pagination' => ['current_page' => 1, 'per_page' => 25, 'total_pages' => 0, 'total_count' => 0],
         ]);
 
         $result = $this->client->console->listPassTemplatePairs();
 
         $this->assertCount(0, $result['pass_template_pairs']);
+    }
+
+    public function testCreatePassTemplatePair(): void
+    {
+        $this->expectRequest('POST', '/v1/console/card-template-pairs', 201, [
+            'id' => 'pair_new',
+            'ex_id' => 'pair_new',
+            'name' => 'New Badge Pair',
+            'created_at' => '2026-04-15T12:00:00Z',
+            'ios_template' => [
+                'id' => 'tmpl_ios',
+                'ex_id' => 'tmpl_ios',
+                'name' => 'iOS Badge',
+                'platform' => 'apple',
+            ],
+            'android_template' => [
+                'id' => 'tmpl_android',
+                'ex_id' => 'tmpl_android',
+                'name' => 'Android Badge',
+                'platform' => 'android',
+            ],
+        ]);
+
+        $pair = $this->client->console->createPassTemplatePair([
+            'name' => 'New Badge Pair',
+            'apple_card_template_id' => 'tmpl_ios',
+            'google_card_template_id' => 'tmpl_android',
+        ]);
+
+        $this->assertInstanceOf(PassTemplatePair::class, $pair);
+        $this->assertEquals('pair_new', $pair->id);
+        $this->assertEquals('pair_new', $pair->exId);
+        $this->assertEquals('New Badge Pair', $pair->name);
+        $this->assertEquals('apple', $pair->iosTemplate->platform);
+        $this->assertEquals('android', $pair->androidTemplate->platform);
     }
 
     public function testListLedgerItems(): void

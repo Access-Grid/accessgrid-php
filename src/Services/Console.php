@@ -80,20 +80,38 @@ class Console
     }
 
     /**
-     * List pass template pairs
+     * List pass template pairs.
+     *
+     * The upstream JSON key is "card_template_pairs"; we remap to
+     * "pass_template_pairs" in the returned array for backward compatibility.
      */
     public function listPassTemplatePairs(array $params = []): array
     {
-        $response = $this->client->get('/v1/console/pass-template-pairs', $params);
+        $response = $this->client->get('/v1/console/card-template-pairs', $params);
 
-        if (isset($response['pass_template_pairs'])) {
+        if (isset($response['card_template_pairs'])) {
             $response['pass_template_pairs'] = array_map(
                 fn($pair) => new PassTemplatePair($this->client, $pair),
-                $response['pass_template_pairs']
+                $response['card_template_pairs']
             );
+            unset($response['card_template_pairs']);
         }
 
         return $response;
+    }
+
+    /**
+     * Create a pass template pair.
+     *
+     * Both card templates must be published (status: ready) and use the
+     * same protocol. $apple_card_template_id must reference an Apple (iOS)
+     * template; $google_card_template_id must reference a Google (Android)
+     * template.
+     */
+    public function createPassTemplatePair(array $params): PassTemplatePair
+    {
+        $response = $this->client->post('/v1/console/card-template-pairs', $params);
+        return new PassTemplatePair($this->client, $response);
     }
 
     /**

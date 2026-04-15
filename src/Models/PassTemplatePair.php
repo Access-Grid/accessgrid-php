@@ -8,6 +8,7 @@ class PassTemplatePair
 {
     private AccessGridClient $client;
     public ?string $id;
+    public ?string $exId;
     public ?string $name;
     public ?string $createdAt;
     public ?TemplateInfo $androidTemplate;
@@ -17,6 +18,7 @@ class PassTemplatePair
     {
         $this->client = $client;
         $this->id = $data['id'] ?? null;
+        $this->exId = $data['ex_id'] ?? null;
         $this->name = $data['name'] ?? null;
         $this->createdAt = $data['created_at'] ?? null;
 

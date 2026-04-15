@@ -264,6 +264,16 @@ foreach ($result['pass_template_pairs'] as $pair) {
        echo "  iOS: {$pair->iosTemplate->name}\n";
    }
 }
+
+// Create a new pair — both card templates must be published (status: ready)
+// and use the same protocol.
+$pair = $client->console->createPassTemplatePair([
+    'name' => 'Employee Badge Pair',
+    'apple_card_template_id' => '0xapplet3mp14t3',
+    'google_card_template_id' => '0xgoogl3t3mp14t3',
+]);
+
+echo "Created pair: {$pair->name} ({$pair->id})\n";
 ```
 
 ### HID Organizations
@@ -381,7 +391,8 @@ MIT License
 | PUT /v1/console/card-templates/{id} | Y |
 | GET /v1/console/card-templates/{id} | Y |
 | GET .../logs | Y |
-| GET /v1/console/pass-template-pairs | Y |
+| GET /v1/console/card-template-pairs | Y |
+| POST /v1/console/card-template-pairs | Y |
 | GET /v1/console/ledger-items | Y |
 | POST /v1/console/ios-preflight | Y |
 | GET /v1/console/landing-pages | Y |
