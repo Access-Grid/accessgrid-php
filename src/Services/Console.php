@@ -6,17 +6,21 @@ use AccessGrid\AccessGridClient;
 use AccessGrid\Models\Template;
 use AccessGrid\Models\PassTemplatePair;
 use AccessGrid\Models\LedgerItem;
+use AccessGrid\Models\LandingPage;
+use AccessGrid\Models\CredentialProfile;
 use AccessGrid\Models\Webhook;
 
 class Console
 {
     private AccessGridClient $client;
     public HID $hid;
+    public CredentialProfiles $credentialProfiles;
 
     public function __construct(AccessGridClient $client)
     {
         $this->client = $client;
         $this->hid = new HID($client);
+        $this->credentialProfiles = new CredentialProfiles($client);
     }
 
     /**
@@ -149,6 +153,39 @@ class Console
     public function deleteWebhook(string $webhookId): void
     {
         $this->client->delete("/v1/console/webhooks/{$webhookId}");
+    }
+
+    /**
+     * List all landing pages
+     *
+     * @return LandingPage[]
+     */
+    public function listLandingPages(): array
+    {
+        $response = $this->client->get('/v1/console/landing-pages');
+
+        return array_map(
+            fn($item) => new LandingPage($this->client, $item),
+            $response
+        );
+    }
+
+    /**
+     * Create a landing page
+     */
+    public function createLandingPage(array $data): LandingPage
+    {
+        $response = $this->client->post('/v1/console/landing-pages', $data);
+        return new LandingPage($this->client, $response);
+    }
+
+    /**
+     * Update a landing page
+     */
+    public function updateLandingPage(string $landingPageId, array $data): LandingPage
+    {
+        $response = $this->client->patch("/v1/console/landing-pages/{$landingPageId}", $data);
+        return new LandingPage($this->client, $response);
     }
 
     /**
