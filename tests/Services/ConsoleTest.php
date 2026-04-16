@@ -190,8 +190,8 @@ class ConsoleTest extends TestCase
 
     public function testListPassTemplatePairs(): void
     {
-        $this->expectRequest('GET', '/v1/console/pass-template-pairs', 200, [
-            'pass_template_pairs' => [
+        $this->expectRequest('GET', '/v1/console/card-template-pairs', 200, [
+            'card_template_pairs' => [
                 [
                     'id' => 'pair_123',
                     'name' => 'Employee Badge Pair',
@@ -218,11 +218,11 @@ class ConsoleTest extends TestCase
 
         $result = $this->client->console->listPassTemplatePairs();
 
-        $this->assertArrayHasKey('pass_template_pairs', $result);
+        $this->assertArrayHasKey('card_template_pairs', $result);
         $this->assertArrayHasKey('pagination', $result);
-        $this->assertCount(1, $result['pass_template_pairs']);
+        $this->assertCount(1, $result['card_template_pairs']);
 
-        $pair = $result['pass_template_pairs'][0];
+        $pair = $result['card_template_pairs'][0];
         $this->assertInstanceOf(PassTemplatePair::class, $pair);
         $this->assertEquals('pair_123', $pair->id);
         $this->assertEquals('Employee Badge Pair', $pair->name);
@@ -244,7 +244,7 @@ class ConsoleTest extends TestCase
             ->with(
                 $this->equalTo('GET'),
                 $this->callback(function (string $url) {
-                    return strpos($url, '/v1/console/pass-template-pairs') !== false
+                    return strpos($url, '/v1/console/card-template-pairs') !== false
                         && strpos($url, 'page=2') !== false
                         && strpos($url, 'per_page=10') !== false;
                 }),
@@ -252,27 +252,27 @@ class ConsoleTest extends TestCase
                 $this->anything()
             )
             ->willReturn(new \AccessGrid\Http\HttpResponse(200, json_encode([
-                'pass_template_pairs' => [],
+                'card_template_pairs' => [],
                 'pagination' => ['current_page' => 2, 'per_page' => 10, 'total_pages' => 3, 'total_count' => 25],
             ])));
 
         $result = $this->client->console->listPassTemplatePairs(['page' => 2, 'per_page' => 10]);
 
-        $this->assertArrayHasKey('pass_template_pairs', $result);
-        $this->assertCount(0, $result['pass_template_pairs']);
+        $this->assertArrayHasKey('card_template_pairs', $result);
+        $this->assertCount(0, $result['card_template_pairs']);
         $this->assertEquals(2, $result['pagination']['current_page']);
     }
 
     public function testListPassTemplatePairsEmpty(): void
     {
-        $this->expectRequest('GET', '/v1/console/pass-template-pairs', 200, [
-            'pass_template_pairs' => [],
+        $this->expectRequest('GET', '/v1/console/card-template-pairs', 200, [
+            'card_template_pairs' => [],
             'pagination' => ['current_page' => 1, 'per_page' => 25, 'total_pages' => 0, 'total_count' => 0],
         ]);
 
         $result = $this->client->console->listPassTemplatePairs();
 
-        $this->assertCount(0, $result['pass_template_pairs']);
+        $this->assertCount(0, $result['card_template_pairs']);
     }
 
     public function testListLedgerItems(): void
