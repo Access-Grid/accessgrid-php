@@ -84,16 +84,25 @@ class Console
      */
     public function listPassTemplatePairs(array $params = []): array
     {
-        $response = $this->client->get('/v1/console/pass-template-pairs', $params);
+        $response = $this->client->get('/v1/console/card-template-pairs', $params);
 
-        if (isset($response['pass_template_pairs'])) {
-            $response['pass_template_pairs'] = array_map(
+        if (isset($response['card_template_pairs'])) {
+            $response['card_template_pairs'] = array_map(
                 fn($pair) => new PassTemplatePair($this->client, $pair),
-                $response['pass_template_pairs']
+                $response['card_template_pairs']
             );
         }
 
         return $response;
+    }
+
+    /**
+     * Create a pass template pair
+     */
+    public function createPassTemplatePair(array $data): PassTemplatePair
+    {
+        $response = $this->client->post('/v1/console/card-template-pairs', $data);
+        return new PassTemplatePair($this->client, $response);
     }
 
     /**
@@ -184,7 +193,7 @@ class Console
      */
     public function updateLandingPage(string $landingPageId, array $data): LandingPage
     {
-        $response = $this->client->patch("/v1/console/landing-pages/{$landingPageId}", $data);
+        $response = $this->client->put("/v1/console/landing-pages/{$landingPageId}", $data);
         return new LandingPage($this->client, $response);
     }
 

@@ -21,3 +21,6 @@ Thumbs.db
 # Environment
 .env
 .envrc
+
+# Test scripts
+scripts/
