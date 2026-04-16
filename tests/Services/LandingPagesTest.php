@@ -63,7 +63,7 @@ class LandingPagesTest extends TestCase
 
     public function testUpdateLandingPage(): void
     {
-        $this->expectRequest('PATCH', '/v1/console/landing-pages/lp_123', 200, [
+        $this->expectRequest('PUT', '/v1/console/landing-pages/lp_123', 200, [
             'id' => 'lp_123',
             'name' => 'Updated Miami Office',
             'kind' => 'universal',
