@@ -11,6 +11,8 @@ use AccessGrid\Services\Console;
 
 class AccessGridClient
 {
+    public const VERSION = '1.2.0';
+
     private string $accountId;
     private string $secretKey;
     private string $baseUrl;
@@ -105,34 +107,15 @@ class AccessGridClient
             $payload = !empty($data) ? json_encode($data) : '';
         }
         
-        // Generate signature
-        $signature = $this->generateSignature($payload);
-        
-        $headers = [
-            'X-ACCT-ID: ' . $this->accountId,
-            'X-PAYLOAD-SIG: ' . $signature,
-            'Content-Type: application/json',
-            'User-Agent: accessgrid-php @ v1.0.0'
-        ];
-
         // For requests with empty bodies (GET or action endpoints like unlink/suspend/resume),
-        // we need to include the sig_payload parameter
+        // include the ID payload in sig_payload query param
         if ($method === 'GET' || $method === 'DELETE' || ($method === 'POST' && empty($data))) {
             if ($params === null) {
                 $params = [];
             }
-            // Include the ID payload in the query params
             if ($resourceId) {
                 $params['sig_payload'] = json_encode(['id' => $resourceId]);
             }
-        }
-
-        // Build final URL with query parameters
-        $finalUrl = $url;
-        if (!empty($params)) {
-            $queryString = http_build_query($params);
-            $separator = strpos($url, '?') !== false ? '&' : '?';
-            $finalUrl = $url . $separator . $queryString;
         }
 
         // Build request body for POST/PUT/PATCH
@@ -141,8 +124,41 @@ class AccessGridClient
             $requestBody = json_encode($data);
         }
 
-        // Delegate to HTTP client
-        $response = $this->httpClient->send($method, $finalUrl, $headers, $requestBody);
+        return $this->executeSignedRequest($method, $url, $requestBody, $payload, $params ?? []);
+    }
+
+    /**
+     * Sign a payload, build headers, send the request, and decode the response.
+     * Single source of truth for the wire-level signed-request behavior.
+     */
+    private function executeSignedRequest(
+        string $method,
+        string $url,
+        ?string $body,
+        string $payloadToSign,
+        array $params = []
+    ): array {
+        $signature = $this->generateSignature($payloadToSign);
+
+        $headers = [
+            'X-ACCT-ID: ' . $this->accountId,
+            'X-PAYLOAD-SIG: ' . $signature,
+            'Content-Type: application/json',
+            'User-Agent: accessgrid-php @ v' . self::VERSION,
+        ];
+
+        $finalUrl = $url;
+        if (!empty($params)) {
+            $separator = strpos($url, '?') !== false ? '&' : '?';
+            $finalUrl = $url . $separator . http_build_query($params);
+        }
+
+        $response = $this->httpClient->send($method, $finalUrl, $headers, $body);
+        return $this->decodeResponse($response);
+    }
+
+    private function decodeResponse(\AccessGrid\Http\HttpResponse $response): array
+    {
         $httpCode = $response->getStatusCode();
         $responseBody = $response->getBody();
 
@@ -166,6 +182,17 @@ class AccessGridClient
         }
 
         return $decoded;
+    }
+
+    /**
+     * POST to an endpoint that accepts no request body.
+     * Per docs: sign and send '{}' (literal empty JSON object).
+     * Distinct from action-on-resource POSTs (suspend/resume/unlink/delete) which
+     * sign {"id": resourceId} via the sig_payload query param.
+     */
+    public function postNoBody(string $endpoint): array
+    {
+        return $this->executeSignedRequest('POST', $this->baseUrl . $endpoint, '{}', '{}');
     }
 
     public function get(string $endpoint, ?array $params = null): array

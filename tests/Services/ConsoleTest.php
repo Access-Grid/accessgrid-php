@@ -10,6 +10,7 @@ use AccessGrid\Models\LedgerItem;
 use AccessGrid\Models\LedgerItemAccessPass;
 use AccessGrid\Models\LedgerItemPassTemplate;
 use AccessGrid\Models\Webhook;
+use AccessGrid\Models\PublishTemplateResult;
 
 class ConsoleTest extends TestCase
 {
@@ -79,6 +80,32 @@ class ConsoleTest extends TestCase
         $this->assertEquals(100, $template->issuedKeysCount);
         $this->assertEquals(85, $template->activeKeysCount);
         $this->assertEquals('#FFFFFF', $template->styleSettings['background_color']);
+    }
+
+    public function testPublishTemplate(): void
+    {
+        $this->expectRequest('POST', '/v1/console/card-templates/tmpl_123/publish', 200, [
+            'id' => 'tmpl_123',
+            'status' => 'in-review',
+        ]);
+
+        $result = $this->client->console->publishTemplate('tmpl_123');
+
+        $this->assertInstanceOf(PublishTemplateResult::class, $result);
+        $this->assertEquals('tmpl_123', $result->id);
+        $this->assertEquals('in-review', $result->status);
+    }
+
+    public function testPublishTemplateAndroidReady(): void
+    {
+        $this->expectRequest('POST', '/v1/console/card-templates/tmpl_456/publish', 200, [
+            'id' => 'tmpl_456',
+            'status' => 'ready',
+        ]);
+
+        $result = $this->client->console->publishTemplate('tmpl_456');
+
+        $this->assertEquals('ready', $result->status);
     }
 
     public function testGetLogs(): void

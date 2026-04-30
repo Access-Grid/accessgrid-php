@@ -9,6 +9,7 @@ use AccessGrid\Models\LedgerItem;
 use AccessGrid\Models\LandingPage;
 use AccessGrid\Models\CredentialProfile;
 use AccessGrid\Models\Webhook;
+use AccessGrid\Models\PublishTemplateResult;
 
 class Console
 {
@@ -51,6 +52,15 @@ class Console
         $templateId = $data['card_template_id'];
         $response = $this->client->get("/v1/console/card-templates/{$templateId}");
         return new Template($this->client, $response);
+    }
+
+    /**
+     * Publish a card template
+     */
+    public function publishTemplate(string $templateId): PublishTemplateResult
+    {
+        $response = $this->client->postNoBody("/v1/console/card-templates/{$templateId}/publish");
+        return new PublishTemplateResult($response);
     }
 
     /**
