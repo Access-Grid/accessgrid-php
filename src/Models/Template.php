@@ -21,6 +21,8 @@ class Template
     public ?array $termsSettings;
     public ?array $styleSettings;
     public ?array $metadata;
+    public ?array $credentialProfiles;
+    public ?array $landingPages;
 
     // Convenience accessors (snake_case aliases)
     public ?string $use_case;
@@ -28,6 +30,8 @@ class Template
     public ?string $last_published_at;
     public ?int $issued_keys_count;
     public ?int $active_keys_count;
+    public ?array $credential_profiles;
+    public ?array $landing_pages;
 
     // Convenience accessors extracted from nested objects
     public ?bool $allow_on_multiple_devices;
@@ -51,6 +55,8 @@ class Template
         $this->termsSettings = $data['terms_settings'] ?? null;
         $this->styleSettings = $data['style_settings'] ?? null;
         $this->metadata = $data['metadata'] ?? null;
+        $this->credentialProfiles = $data['credential_profiles'] ?? null;
+        $this->landingPages = $data['landing_pages'] ?? null;
 
         // snake_case aliases
         $this->use_case = $this->useCase;
@@ -58,6 +64,8 @@ class Template
         $this->last_published_at = $this->lastPublishedAt;
         $this->issued_keys_count = $this->issuedKeysCount;
         $this->active_keys_count = $this->activeKeysCount;
+        $this->credential_profiles = $this->credentialProfiles;
+        $this->landing_pages = $this->landingPages;
 
         // Convenience accessors from nested objects
         $this->allow_on_multiple_devices = $this->allowedDeviceCounts['allow_on_multiple_devices'] ?? null;

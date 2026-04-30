@@ -103,4 +103,40 @@ class TemplateTest extends TestCase
         $this->assertNull($template->termsSettings);
         $this->assertNull($template->styleSettings);
     }
+
+    public function testCredentialProfilesAndLandingPagesPresent(): void
+    {
+        $template = new Template($this->client, [
+            'credential_profiles' => ['cp_1', 'cp_2'],
+            'landing_pages' => ['lp_1'],
+        ]);
+
+        $this->assertEquals(['cp_1', 'cp_2'], $template->credentialProfiles);
+        $this->assertEquals(['lp_1'], $template->landingPages);
+
+        // snake_case aliases
+        $this->assertEquals(['cp_1', 'cp_2'], $template->credential_profiles);
+        $this->assertEquals(['lp_1'], $template->landing_pages);
+    }
+
+    public function testCredentialProfilesAndLandingPagesEmpty(): void
+    {
+        $template = new Template($this->client, [
+            'credential_profiles' => [],
+            'landing_pages' => [],
+        ]);
+
+        $this->assertEquals([], $template->credentialProfiles);
+        $this->assertEquals([], $template->landingPages);
+    }
+
+    public function testCredentialProfilesAndLandingPagesAbsent(): void
+    {
+        $template = new Template($this->client, []);
+
+        $this->assertNull($template->credentialProfiles);
+        $this->assertNull($template->landingPages);
+        $this->assertNull($template->credential_profiles);
+        $this->assertNull($template->landing_pages);
+    }
 }

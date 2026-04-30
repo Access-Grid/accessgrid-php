@@ -108,6 +108,112 @@ class ConsoleTest extends TestCase
         $this->assertEquals('ready', $result->status);
     }
 
+    public function testPublishTemplateSignsEmptyJsonObject(): void
+    {
+        // Per docs: publish has no body; sign and send '{}' literally.
+        // Distinct from suspend/resume/unlink/delete which use sig_payload={"id":"..."}.
+        $expectedSig = hash_hmac('sha256', base64_encode('{}'), 'test-secret-key');
+
+        $this->mockHttpClient
+            ->expects($this->once())
+            ->method('send')
+            ->with(
+                $this->equalTo('POST'),
+                $this->logicalAnd(
+                    $this->stringContains('/v1/console/card-templates/tmpl_123/publish'),
+                    $this->logicalNot($this->stringContains('sig_payload='))
+                ),
+                $this->callback(function (array $headers) use ($expectedSig) {
+                    return in_array('X-PAYLOAD-SIG: ' . $expectedSig, $headers, true);
+                }),
+                $this->equalTo('{}')
+            )
+            ->willReturn(new \AccessGrid\Http\HttpResponse(200, json_encode([
+                'id' => 'tmpl_123',
+                'status' => 'in-review',
+            ])));
+
+        $this->client->console->publishTemplate('tmpl_123');
+    }
+
+    public function testCreateTemplateWithCredentialProfilesAndLandingPages(): void
+    {
+        $this->mockHttpClient
+            ->expects($this->once())
+            ->method('send')
+            ->with(
+                $this->equalTo('POST'),
+                $this->stringContains('/v1/console/card-templates'),
+                $this->isType('array'),
+                $this->callback(function ($body) {
+                    $decoded = json_decode($body, true);
+                    return is_array($decoded)
+                        && ($decoded['credential_profiles'] ?? null) === ['cp_1', 'cp_2']
+                        && ($decoded['landing_pages'] ?? null) === ['lp_1'];
+                })
+            )
+            ->willReturn(new \AccessGrid\Http\HttpResponse(200, json_encode([
+                'id' => 'tmpl_123',
+                'name' => 'Employee Badge',
+            ])));
+
+        $this->client->console->createTemplate([
+            'name' => 'Employee Badge',
+            'platform' => 'apple',
+            'credential_profiles' => ['cp_1', 'cp_2'],
+            'landing_pages' => ['lp_1'],
+        ]);
+    }
+
+    public function testUpdateTemplateWithCredentialProfilesAndLandingPages(): void
+    {
+        $this->mockHttpClient
+            ->expects($this->once())
+            ->method('send')
+            ->with(
+                $this->equalTo('PUT'),
+                $this->stringContains('/v1/console/card-templates/tmpl_123'),
+                $this->isType('array'),
+                $this->callback(function ($body) {
+                    $decoded = json_decode($body, true);
+                    return is_array($decoded)
+                        && ($decoded['credential_profiles'] ?? null) === ['cp_1']
+                        && ($decoded['landing_pages'] ?? null) === []
+                        && !isset($decoded['card_template_id']);
+                })
+            )
+            ->willReturn(new \AccessGrid\Http\HttpResponse(200, json_encode([
+                'id' => 'tmpl_123',
+                'name' => 'Updated Badge',
+            ])));
+
+        $this->client->console->updateTemplate([
+            'card_template_id' => 'tmpl_123',
+            'name' => 'Updated Badge',
+            'credential_profiles' => ['cp_1'],
+            'landing_pages' => [],
+        ]);
+    }
+
+    public function testReadTemplateExposesCredentialProfilesAndLandingPages(): void
+    {
+        $this->expectRequest('GET', '/v1/console/card-templates/tmpl_123', 200, [
+            'id' => 'tmpl_123',
+            'name' => 'Employee Badge',
+            'credential_profiles' => ['cp_1', 'cp_2'],
+            'landing_pages' => ['lp_1'],
+        ]);
+
+        $template = $this->client->console->readTemplate([
+            'card_template_id' => 'tmpl_123',
+        ]);
+
+        $this->assertEquals(['cp_1', 'cp_2'], $template->credentialProfiles);
+        $this->assertEquals(['lp_1'], $template->landingPages);
+        $this->assertEquals(['cp_1', 'cp_2'], $template->credential_profiles);
+        $this->assertEquals(['lp_1'], $template->landing_pages);
+    }
+
     public function testGetLogs(): void
     {
         $this->expectRequest('GET', '/v1/console/card-templates/tmpl_123/logs', 200, [
