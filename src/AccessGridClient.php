@@ -184,17 +184,6 @@ class AccessGridClient
         return $decoded;
     }
 
-    /**
-     * POST to an endpoint that accepts no request body.
-     * Per docs: sign and send '{}' (literal empty JSON object).
-     * Distinct from action-on-resource POSTs (suspend/resume/unlink/delete) which
-     * sign {"id": resourceId} via the sig_payload query param.
-     */
-    public function postNoBody(string $endpoint): array
-    {
-        return $this->executeSignedRequest('POST', $this->baseUrl . $endpoint, '{}', '{}');
-    }
-
     public function get(string $endpoint, ?array $params = null): array
     {
         return $this->makeRequest('GET', $endpoint, null, $params);

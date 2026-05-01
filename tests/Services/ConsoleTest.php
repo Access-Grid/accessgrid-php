@@ -10,7 +10,6 @@ use AccessGrid\Models\LedgerItem;
 use AccessGrid\Models\LedgerItemAccessPass;
 use AccessGrid\Models\LedgerItemPassTemplate;
 use AccessGrid\Models\Webhook;
-use AccessGrid\Models\PublishTemplateResult;
 
 class ConsoleTest extends TestCase
 {
@@ -89,9 +88,9 @@ class ConsoleTest extends TestCase
             'status' => 'in-review',
         ]);
 
-        $result = $this->client->console->publishTemplate('tmpl_123');
+        $result = $this->client->console->publishTemplate(['card_template_id' => 'tmpl_123']);
 
-        $this->assertInstanceOf(PublishTemplateResult::class, $result);
+        $this->assertIsObject($result);
         $this->assertEquals('tmpl_123', $result->id);
         $this->assertEquals('in-review', $result->status);
     }
@@ -103,16 +102,16 @@ class ConsoleTest extends TestCase
             'status' => 'ready',
         ]);
 
-        $result = $this->client->console->publishTemplate('tmpl_456');
+        $result = $this->client->console->publishTemplate(['card_template_id' => 'tmpl_456']);
 
         $this->assertEquals('ready', $result->status);
     }
 
-    public function testPublishTemplateSignsEmptyJsonObject(): void
+    public function testPublishTemplateSignsCardTemplateIdPayload(): void
     {
-        // Per docs: publish has no body; sign and send '{}' literally.
-        // Distinct from suspend/resume/unlink/delete which use sig_payload={"id":"..."}.
-        $expectedSig = hash_hmac('sha256', base64_encode('{}'), 'test-secret-key');
+        // Per API convention: action endpoints send {"<id_key>": "<id>"} body and sign it.
+        $expectedBody = '{"card_template_id":"tmpl_123"}';
+        $expectedSig = hash_hmac('sha256', base64_encode($expectedBody), 'test-secret-key');
 
         $this->mockHttpClient
             ->expects($this->once())
@@ -126,14 +125,14 @@ class ConsoleTest extends TestCase
                 $this->callback(function (array $headers) use ($expectedSig) {
                     return in_array('X-PAYLOAD-SIG: ' . $expectedSig, $headers, true);
                 }),
-                $this->equalTo('{}')
+                $this->equalTo($expectedBody)
             )
             ->willReturn(new \AccessGrid\Http\HttpResponse(200, json_encode([
                 'id' => 'tmpl_123',
                 'status' => 'in-review',
             ])));
 
-        $this->client->console->publishTemplate('tmpl_123');
+        $this->client->console->publishTemplate(['card_template_id' => 'tmpl_123']);
     }
 
     public function testCreateTemplateWithCredentialProfilesAndLandingPages(): void
