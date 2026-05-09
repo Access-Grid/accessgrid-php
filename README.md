@@ -200,6 +200,30 @@ echo "Protocol: {$template->protocol}\n";
 echo "Multi-device: {$template->allow_on_multiple_devices}\n";
 ```
 
+### Publishing a Card Template
+
+```php
+$result = $client->console->publishTemplate([
+    'card_template_id' => '0xd3adb00b5'
+]);
+
+echo "Template ID: {$result->id}\n";
+echo "Status: {$result->status}\n";
+```
+
+### Revealing a SmartTap Private Key
+
+```php
+// SDK generates a P-256 keypair locally, submits the public key, and
+// decrypts the server's response. The private key never leaves the host.
+$result = $client->console->revealTemplatePrivateKey('0xd3adb00b5');
+
+echo "Key version: {$result->keyVersion}\n";
+echo "Collector ID: {$result->collectorId}\n";
+echo "Fingerprint: {$result->fingerprint}\n";
+echo $result->privateKey; // PEM — store in your reader/collector key vault
+```
+
 ### Event Logs
 
 ```php
@@ -380,6 +404,8 @@ MIT License
 | POST /v1/console/card-templates | `console->createTemplate()` | Y |
 | PUT /v1/console/card-templates/{id} | `console->updateTemplate()` | Y |
 | GET /v1/console/card-templates/{id} | `console->readTemplate()` | Y |
+| POST /v1/console/card-templates/{id}/publish | `console->publishTemplate()` | Y |
+| POST /v1/console/card-templates/{id}/smart-tap/reveal | `console->revealTemplatePrivateKey()` | Y |
 | GET /v1/console/card-templates/{id}/logs | `console->eventLog()` | Y |
 | GET /v1/console/card-template-pairs | `console->listPassTemplatePairs()` | Y |
 | POST /v1/console/card-template-pairs | `console->createPassTemplatePair()` | Y |

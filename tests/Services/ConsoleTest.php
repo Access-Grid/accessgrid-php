@@ -51,6 +51,96 @@ class ConsoleTest extends TestCase
         $this->assertEquals('Updated Badge', $template->name);
     }
 
+    public function testPublishTemplate(): void
+    {
+        $this->expectRequest('POST', '/v1/console/card-templates/tmpl_123/publish', 200, [
+            'id' => 'tmpl_123',
+            'status' => 'in-review',
+        ]);
+
+        $result = $this->client->console->publishTemplate([
+            'card_template_id' => 'tmpl_123',
+        ]);
+
+        $this->assertEquals('tmpl_123', $result->id);
+        $this->assertEquals('in-review', $result->status);
+    }
+
+    public function testRevealTemplatePrivateKeyDecryptsServerEnvelope(): void
+    {
+        $plaintextPem = "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIBmlx2KqB7+RLMrHWLMm6hh3JwFrL2ZxZTLkW1yX8OabAoGCCqGSM49\nAwEHoUQDQgAEs5bJrjEXAMPLEEXAMPLEEXAMPLEEXAMPLEEXAMPLEEXAMPLEEXA\nMPLEEXAMPLEEXAMPLEEXAMPLEEXAMPLEEXAMPLEEXAMPLEEXAMPLEE=\n-----END EC PRIVATE KEY-----\n";
+
+        // Capture the SDK's outgoing client_public_key, then encrypt against it.
+        $this->mockHttpClient
+            ->expects($this->once())
+            ->method('send')
+            ->willReturnCallback(function (string $method, string $url, array $headers, ?string $body) use ($plaintextPem) {
+                $this->assertSame('POST', $method);
+                $this->assertStringContainsString('/v1/console/card-templates/tmpl-42/smart-tap/reveal', $url);
+
+                $sent = json_decode($body, true);
+                $clientPublicKeyPem = $sent['client_public_key'];
+
+                $envelope = $this->simulateServerEncrypt($plaintextPem, $clientPublicKeyPem);
+                return new \AccessGrid\Http\HttpResponse(200, json_encode([
+                    'key_version' => 'tmpl-42',
+                    'collector_id' => '12345678',
+                    'fingerprint' => str_repeat('a', 64),
+                    'encrypted_private_key' => [
+                        'alg' => 'ECDH-ES+A256GCM',
+                        'ephemeral_public_key' => $envelope['ephemeral_public_key_pem'],
+                        'iv' => base64_encode($envelope['iv']),
+                        'ciphertext' => base64_encode($envelope['ciphertext']),
+                        'tag' => base64_encode($envelope['tag']),
+                    ],
+                ]));
+            });
+
+        $result = $this->client->console->revealTemplatePrivateKey('tmpl-42');
+
+        $this->assertEquals('tmpl-42', $result->keyVersion);
+        $this->assertEquals('12345678', $result->collectorId);
+        $this->assertEquals(64, strlen($result->fingerprint));
+        $this->assertEquals($plaintextPem, $result->privateKey);
+    }
+
+    /**
+     * Mirrors rails' SmartTap::RevealEncryption.encrypt to exercise the SDK's
+     * full ECDH/HKDF/AES-GCM round-trip end-to-end.
+     */
+    private function simulateServerEncrypt(string $plaintextPem, string $clientPublicKeyPem): array
+    {
+        $ephemeral = openssl_pkey_new([
+            'curve_name' => 'prime256v1',
+            'private_key_type' => OPENSSL_KEYTYPE_EC,
+        ]);
+        $ephemeralDetails = openssl_pkey_get_details($ephemeral);
+
+        $clientPub = openssl_pkey_get_public($clientPublicKeyPem);
+        $sharedSecret = openssl_pkey_derive($clientPub, $ephemeral);
+        $aesKey = hash_hkdf('sha256', $sharedSecret, 32, 'accessgrid-smart-tap-reveal-v1', '');
+
+        $iv = random_bytes(12);
+        $tag = '';
+        $ciphertext = openssl_encrypt(
+            $plaintextPem,
+            'aes-256-gcm',
+            $aesKey,
+            OPENSSL_RAW_DATA,
+            $iv,
+            $tag,
+            '',
+            16
+        );
+
+        return [
+            'ephemeral_public_key_pem' => $ephemeralDetails['key'],
+            'iv' => $iv,
+            'ciphertext' => $ciphertext,
+            'tag' => $tag,
+        ];
+    }
+
     public function testReadTemplate(): void
     {
         $this->expectRequest('GET', '/v1/console/card-templates/tmpl_123', 200, [

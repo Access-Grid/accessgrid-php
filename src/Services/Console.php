@@ -54,6 +54,62 @@ class Console
     }
 
     /**
+     * Publish a card template. Apple templates transition to "in-review";
+     * Android templates become "ready" immediately.
+     *
+     * @param array{card_template_id: string} $data
+     * @return object Properties: id, status
+     */
+    public function publishTemplate(array $data): object
+    {
+        $templateId = $data['card_template_id'];
+        $response = $this->client->post("/v1/console/card-templates/{$templateId}/publish", []);
+        return (object) $response;
+    }
+
+    /**
+     * Reveal the SmartTap private key for a card template.
+     *
+     * The SDK generates a P-256 keypair locally, submits the public key to the
+     * server, and decrypts the returned envelope (ECDH-ES + HKDF-SHA256 +
+     * AES-256-GCM) so the private key never leaves this host in plaintext.
+     * Each call must use a fresh public key — the server rejects reuse.
+     *
+     * @return object Properties: keyVersion, collectorId, fingerprint, privateKey (PEM)
+     */
+    public function revealTemplatePrivateKey(string $templateId): object
+    {
+        $generated = SmartTapRevealCrypto::generateKeyPair();
+
+        $raw = $this->client->post(
+            "/v1/console/card-templates/{$templateId}/smart-tap/reveal",
+            ['client_public_key' => $generated['public_key_pem']]
+        );
+
+        if (empty($raw['encrypted_private_key'])) {
+            throw new \AccessGrid\Exceptions\AccessGridException(
+                'Server response missing encrypted_private_key envelope'
+            );
+        }
+
+        $envelope = $raw['encrypted_private_key'];
+        $plaintext = SmartTapRevealCrypto::decryptEnvelope(
+            $generated['key'],
+            $envelope['ephemeral_public_key'],
+            base64_decode($envelope['iv']),
+            base64_decode($envelope['ciphertext']),
+            base64_decode($envelope['tag'])
+        );
+
+        return (object) [
+            'keyVersion' => $raw['key_version'] ?? null,
+            'collectorId' => $raw['collector_id'] ?? null,
+            'fingerprint' => $raw['fingerprint'] ?? null,
+            'privateKey' => $plaintext,
+        ];
+    }
+
+    /**
      * Get event logs for a card template
      */
     public function getLogs(string $templateId, array $params = []): array
