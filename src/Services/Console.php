@@ -54,6 +54,19 @@ class Console
     }
 
     /**
+     * Publish a card template
+     */
+    public function publishTemplate(array $data): object
+    {
+        $templateId = $data['card_template_id'];
+        $response = $this->client->post(
+            "/v1/console/card-templates/{$templateId}/publish",
+            ['card_template_id' => $templateId]
+        );
+        return (object) $response;
+    }
+
+    /**
      * Get event logs for a card template
      */
     public function getLogs(string $templateId, array $params = []): array

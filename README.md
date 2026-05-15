@@ -384,6 +384,7 @@ MIT License
 | GET /v1/console/card-template-pairs | `console->listPassTemplatePairs()` | Y |
 | POST /v1/console/card-template-pairs | `console->createPassTemplatePair()` | Y |
 | POST /v1/console/card-templates/{id}/ios_preflight | `console->iosPreflight()` | Y |
+| POST /v1/console/card-templates/{id}/publish | `console->publishTemplate()` | Y |
 | GET /v1/console/ledger-items | `console->ledgerItems()` | Y |
 | GET /v1/console/landing-pages | `console->listLandingPages()` | Y |
 | POST /v1/console/landing-pages | `console->createLandingPage()` | Y |
