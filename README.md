@@ -138,7 +138,7 @@ $client->accessCards->delete(['card_id' => '0xc4rd1d']);
 $template = $client->console->createTemplate([
    'name' => 'Employee Access Pass',
    'platform' => 'apple',
-   'use_case' => 'employee_badge',
+   'use_case' => 'corporate_id',
    'protocol' => 'desfire',
    'allow_on_multiple_devices' => true,
    'watch_count' => 2,
@@ -199,6 +199,21 @@ echo "Platform: {$template->platform}\n";
 echo "Protocol: {$template->protocol}\n";
 echo "Multi-device: {$template->allow_on_multiple_devices}\n";
 ```
+
+### Revealing a SmartTap Private Key
+
+Fetches the template's SmartTap private key, decrypted client-side. The SDK generates a fresh ephemeral P-256 keypair per call, submits the public half, and decrypts the server's response — you get the plaintext PEM back without touching any crypto.
+
+```php
+$reveal = $client->console->revealSmartTap('0xd3adb00b5');
+
+echo "Key version:  {$reveal->keyVersion}\n";
+echo "Collector ID: {$reveal->collectorId}\n";
+echo "Fingerprint:  {$reveal->fingerprint}\n";
+echo $reveal->privateKey;  // PEM — store in your reader/collector key vault
+```
+
+The server enforces single-use on pubkey fingerprint and rate-limits to 1 per minute per account. The SDK uses a fresh keypair every call, so single-use is satisfied automatically.
 
 ### Event Logs
 
@@ -385,6 +400,7 @@ MIT License
 | POST /v1/console/card-template-pairs | `console->createPassTemplatePair()` | Y |
 | POST /v1/console/card-templates/{id}/ios_preflight | `console->iosPreflight()` | Y |
 | POST /v1/console/card-templates/{id}/publish | `console->publishTemplate()` | Y |
+| POST /v1/console/card-templates/{id}/smart-tap/reveal | `console->revealSmartTap()` | Y |
 | GET /v1/console/ledger-items | `console->ledgerItems()` | Y |
 | GET /v1/console/landing-pages | `console->listLandingPages()` | Y |
 | POST /v1/console/landing-pages | `console->createLandingPage()` | Y |
