@@ -11,7 +11,7 @@ use AccessGrid\Services\Console;
 
 class AccessGridClient
 {
-    public const VERSION = '1.2.0';
+    public const VERSION = '1.3.0';
 
     private string $accountId;
     private string $secretKey;
