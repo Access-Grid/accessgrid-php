@@ -13,7 +13,7 @@ class TemplateTest extends TestCase
             'id' => 'tmpl_123',
             'name' => 'Employee Badge',
             'platform' => 'apple',
-            'use_case' => 'employee_badge',
+            'use_case' => 'corporate_id',
             'protocol' => 'desfire',
             'created_at' => '2025-01-01T00:00:00Z',
             'last_published_at' => '2025-06-01T00:00:00Z',
@@ -31,7 +31,7 @@ class TemplateTest extends TestCase
         $this->assertEquals('tmpl_123', $template->id);
         $this->assertEquals('Employee Badge', $template->name);
         $this->assertEquals('apple', $template->platform);
-        $this->assertEquals('employee_badge', $template->useCase);
+        $this->assertEquals('corporate_id', $template->useCase);
         $this->assertEquals('desfire', $template->protocol);
         $this->assertEquals('2025-01-01T00:00:00Z', $template->createdAt);
         $this->assertEquals('2025-06-01T00:00:00Z', $template->lastPublishedAt);
@@ -44,7 +44,7 @@ class TemplateTest extends TestCase
         $this->assertEquals(['version' => '2.1'], $template->metadata);
 
         // snake_case aliases
-        $this->assertEquals('employee_badge', $template->use_case);
+        $this->assertEquals('corporate_id', $template->use_case);
         $this->assertEquals('2025-01-01T00:00:00Z', $template->created_at);
         $this->assertEquals('2025-06-01T00:00:00Z', $template->last_published_at);
         $this->assertEquals(100, $template->issued_keys_count);

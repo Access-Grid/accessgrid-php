@@ -31,7 +31,7 @@ class LedgerItemTest extends TestCase
                     'name' => 'Employee Badge',
                     'protocol' => 'desfire',
                     'platform' => 'apple',
-                    'use_case' => 'employee_badge',
+                    'use_case' => 'corporate_id',
                 ],
             ],
         ];
@@ -56,7 +56,7 @@ class LedgerItemTest extends TestCase
         $this->assertEquals('Employee Badge', $item->accessPass->passTemplate->name);
         $this->assertEquals('desfire', $item->accessPass->passTemplate->protocol);
         $this->assertEquals('apple', $item->accessPass->passTemplate->platform);
-        $this->assertEquals('employee_badge', $item->accessPass->passTemplate->useCase);
+        $this->assertEquals('corporate_id', $item->accessPass->passTemplate->useCase);
     }
 
     public function testConstructionWithNullAccessPass(): void

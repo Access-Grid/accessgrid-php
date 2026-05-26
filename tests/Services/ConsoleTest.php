@@ -25,7 +25,7 @@ class ConsoleTest extends TestCase
         $template = $this->client->console->createTemplate([
             'name' => 'Employee Badge',
             'platform' => 'apple',
-            'use_case' => 'employee_badge',
+            'use_case' => 'corporate_id',
             'protocol' => 'desfire',
         ]);
 
@@ -58,7 +58,7 @@ class ConsoleTest extends TestCase
             'name' => 'Employee Badge',
             'platform' => 'apple',
             'protocol' => 'desfire',
-            'use_case' => 'employee_badge',
+            'use_case' => 'corporate_id',
             'created_at' => '2025-01-01T00:00:00Z',
             'last_published_at' => '2025-06-01T00:00:00Z',
             'issued_keys_count' => 100,
@@ -75,7 +75,7 @@ class ConsoleTest extends TestCase
 
         $this->assertInstanceOf(Template::class, $template);
         $this->assertEquals('tmpl_123', $template->id);
-        $this->assertEquals('employee_badge', $template->useCase);
+        $this->assertEquals('corporate_id', $template->useCase);
         $this->assertEquals(100, $template->issuedKeysCount);
         $this->assertEquals(85, $template->activeKeysCount);
         $this->assertEquals('#FFFFFF', $template->styleSettings['background_color']);
@@ -474,7 +474,7 @@ class ConsoleTest extends TestCase
                             'name' => 'Employee Badge',
                             'protocol' => 'desfire',
                             'platform' => 'apple',
-                            'use_case' => 'employee_badge',
+                            'use_case' => 'corporate_id',
                         ],
                     ],
                 ],
