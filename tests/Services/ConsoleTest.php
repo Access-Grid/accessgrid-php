@@ -135,6 +135,50 @@ class ConsoleTest extends TestCase
         $this->client->console->publishTemplate(['card_template_id' => 'tmpl_123']);
     }
 
+    public function testRevealSmartTapDecryptsServerEnvelope(): void
+    {
+        // Captured wire-compat fixture — same one used in SmartTapRevealCryptoTest.
+        $fixtureCallerPrivPem = "-----BEGIN EC PRIVATE KEY-----\n" .
+            "MHcCAQEEIIou+Kk08kWAjhi0WyIx+L2GrgStGBCPODlwKYKd5BydoAoGCCqGSM49\n" .
+            "AwEHoUQDQgAE+gnDxXJt1SBaCK8roKH8QvOa/ItdQUe85JIsUc6RvhD/udLaFtHY\n" .
+            "m+MnOmeSdVaKTPWudH0+iGbleB3kS7lYxQ==\n" .
+            "-----END EC PRIVATE KEY-----\n";
+
+        $fixtureEnvelope = [
+            'alg' => 'ECDH-ES+A256GCM',
+            'ciphertext' => 'ckYyA3FdRYjOFI/FKz/QeR5Yf9nZZFzo73kDXKZSB/EgbQ==',
+            'ephemeral_public_key' => "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE7mg6i99GcIVutMPr/PXSBSQVlbLM\ntnJO10ZBjk9ZTfw6wwAVNBnDBiqY7VrdOG1JdFOYoac+NkAlyMRGYk2tVQ==\n-----END PUBLIC KEY-----\n",
+            'iv' => '5X2OCht+kLB/xQmX',
+            'tag' => '0vwkjVaCwi5zl37xvJPxeg==',
+        ];
+
+        $priv = openssl_pkey_get_private($fixtureCallerPrivPem);
+        $pubPem = openssl_pkey_get_details($priv)['key'];
+
+        $this->expectRequest(
+            'POST',
+            '/v1/console/card-templates/tmpl-42/smart-tap/reveal',
+            200,
+            [
+                'key_version' => 'tmpl-42',
+                'collector_id' => '12345678',
+                'fingerprint' => 'sha256:deadbeef',
+                'encrypted_private_key' => $fixtureEnvelope,
+            ]
+        );
+
+        $result = $this->client->console->revealSmartTap('tmpl-42', [
+            'priv' => $priv,
+            'pub_pem' => $pubPem,
+        ]);
+
+        $this->assertInstanceOf(\AccessGrid\Models\RevealTemplatePrivateKey::class, $result);
+        $this->assertSame('tmpl-42', $result->keyVersion);
+        $this->assertSame('12345678', $result->collectorId);
+        $this->assertSame('sha256:deadbeef', $result->fingerprint);
+        $this->assertSame('FIXTURE-PLAINTEXT-NOT-A-CREDENTIAL', $result->privateKey);
+    }
+
     public function testCreateTemplateWithCredentialProfilesAndLandingPages(): void
     {
         $this->mockHttpClient

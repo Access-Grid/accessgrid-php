@@ -9,6 +9,8 @@ use AccessGrid\Models\LedgerItem;
 use AccessGrid\Models\LandingPage;
 use AccessGrid\Models\CredentialProfile;
 use AccessGrid\Models\Webhook;
+use AccessGrid\Models\RevealTemplatePrivateKey;
+use AccessGrid\Crypto\SmartTapRevealCrypto;
 
 class Console
 {
@@ -51,6 +53,40 @@ class Console
         $templateId = $data['card_template_id'];
         $response = $this->client->get("/v1/console/card-templates/{$templateId}");
         return new Template($this->client, $response);
+    }
+
+    /**
+     * Reveal the SmartTap private key for a card template, decrypted client-side.
+     *
+     * The SDK generates a fresh ephemeral P-256 keypair per call, submits the
+     * public half, and decrypts the server's response. The returned
+     * RevealTemplatePrivateKey carries the plaintext PEM in `$privateKey`;
+     * the encrypted envelope is consumed internally and not exposed.
+     *
+     * @param string $templateId The card template ex_id (must be a published SmartTap template).
+     * @param array|null $keypairOverride Test/advanced opt-in: shape ['priv' => OpenSSL key, 'pub_pem' => PEM]
+     *                                    to bypass internal keypair generation. Defaults to null (SDK generates).
+     */
+    public function revealSmartTap(string $templateId, ?array $keypairOverride = null): RevealTemplatePrivateKey
+    {
+        $keypair = $keypairOverride ?? SmartTapRevealCrypto::generateKeypair();
+
+        $response = $this->client->post(
+            "/v1/console/card-templates/{$templateId}/smart-tap/reveal",
+            ['client_public_key' => $keypair['pub_pem']]
+        );
+
+        $plaintext = SmartTapRevealCrypto::decryptEnvelope(
+            $response['encrypted_private_key'],
+            $keypair['priv']
+        );
+
+        return new RevealTemplatePrivateKey([
+            'key_version' => $response['key_version'] ?? null,
+            'collector_id' => $response['collector_id'] ?? null,
+            'fingerprint' => $response['fingerprint'] ?? null,
+            'private_key' => $plaintext,
+        ]);
     }
 
     /**
