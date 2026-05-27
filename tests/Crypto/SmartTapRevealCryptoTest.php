@@ -4,6 +4,8 @@ namespace AccessGrid\Tests\Crypto;
 
 use PHPUnit\Framework\TestCase;
 use AccessGrid\Crypto\SmartTapRevealCrypto;
+use AccessGrid\Exceptions\DecryptException;
+use AccessGrid\Exceptions\InvalidEnvelopeException;
 
 class SmartTapRevealCryptoTest extends TestCase
 {
@@ -59,7 +61,7 @@ class SmartTapRevealCryptoTest extends TestCase
         $tag[0] = chr(ord($tag[0]) ^ 0x01);
         $envelope['tag'] = base64_encode($tag);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(DecryptException::class);
         $this->expectExceptionMessage('AES-GCM decryption failed');
 
         SmartTapRevealCrypto::decryptEnvelope($envelope, self::fixtureCallerPrivateKey());
@@ -72,7 +74,7 @@ class SmartTapRevealCryptoTest extends TestCase
             'private_key_type' => OPENSSL_KEYTYPE_EC,
         ]);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(DecryptException::class);
         $this->expectExceptionMessage('AES-GCM decryption failed');
 
         SmartTapRevealCrypto::decryptEnvelope(self::fixtureEnvelope(), $wrong);
@@ -83,7 +85,7 @@ class SmartTapRevealCryptoTest extends TestCase
         $envelope = self::fixtureEnvelope();
         unset($envelope['ephemeral_public_key']);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(InvalidEnvelopeException::class);
         $this->expectExceptionMessage('Invalid ephemeral_public_key');
 
         SmartTapRevealCrypto::decryptEnvelope($envelope, self::fixtureCallerPrivateKey());
@@ -94,7 +96,7 @@ class SmartTapRevealCryptoTest extends TestCase
         $envelope = self::fixtureEnvelope();
         $envelope['iv'] = 'not!base64!';
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(InvalidEnvelopeException::class);
         $this->expectExceptionMessage('base64');
 
         SmartTapRevealCrypto::decryptEnvelope($envelope, self::fixtureCallerPrivateKey());

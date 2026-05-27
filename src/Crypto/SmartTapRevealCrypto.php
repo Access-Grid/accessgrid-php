@@ -2,6 +2,10 @@
 
 namespace AccessGrid\Crypto;
 
+use AccessGrid\Exceptions\AccessGridException;
+use AccessGrid\Exceptions\DecryptException;
+use AccessGrid\Exceptions\InvalidEnvelopeException;
+
 /**
  * Internal crypto helpers for the SmartTap reveal flow.
  *
@@ -27,7 +31,7 @@ class SmartTapRevealCrypto
             'private_key_type' => OPENSSL_KEYTYPE_EC,
         ]);
         if ($priv === false) {
-            throw new \RuntimeException('Failed to generate EC keypair: ' . openssl_error_string());
+            throw new AccessGridException('Failed to generate EC keypair: ' . openssl_error_string());
         }
 
         $details = openssl_pkey_get_details($priv);
@@ -50,14 +54,14 @@ class SmartTapRevealCrypto
     {
         $serverPub = openssl_pkey_get_public($envelope['ephemeral_public_key'] ?? '');
         if ($serverPub === false) {
-            throw new \RuntimeException('Invalid ephemeral_public_key in envelope');
+            throw new InvalidEnvelopeException('Invalid ephemeral_public_key in envelope');
         }
 
         // Natural-length shared secret (32 bytes / P-256 X coord). The third
         // arg was deprecated in PHP 8.4 as either ignored or truncating.
         $sharedSecret = openssl_pkey_derive($serverPub, $privKey);
         if ($sharedSecret === false) {
-            throw new \RuntimeException('ECDH derivation failed: ' . openssl_error_string());
+            throw new AccessGridException('ECDH derivation failed: ' . openssl_error_string());
         }
 
         $aesKey = hash_hkdf('sha256', $sharedSecret, self::KEY_LEN, self::HKDF_INFO, '');
@@ -66,7 +70,7 @@ class SmartTapRevealCrypto
         $ciphertext = base64_decode($envelope['ciphertext'] ?? '', true);
         $tag = base64_decode($envelope['tag'] ?? '', true);
         if ($iv === false || $ciphertext === false || $tag === false) {
-            throw new \RuntimeException('Envelope iv/ciphertext/tag must be base64-encoded');
+            throw new InvalidEnvelopeException('Envelope iv/ciphertext/tag must be base64-encoded');
         }
 
         $plaintext = openssl_decrypt(
@@ -80,7 +84,7 @@ class SmartTapRevealCrypto
         );
 
         if ($plaintext === false) {
-            throw new \RuntimeException('AES-GCM decryption failed (auth tag verification)');
+            throw new DecryptException('AES-GCM decryption failed (auth tag verification)');
         }
 
         return $plaintext;
