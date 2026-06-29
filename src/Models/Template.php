@@ -37,6 +37,7 @@ class Template
     public ?bool $allow_on_multiple_devices;
     public ?int $watch_count;
     public ?int $iphone_count;
+    public ?string $android_device_limit;
 
     public function __construct(AccessGridClient $client, array $data)
     {
@@ -71,5 +72,6 @@ class Template
         $this->allow_on_multiple_devices = $this->allowedDeviceCounts['allow_on_multiple_devices'] ?? null;
         $this->watch_count = $this->allowedDeviceCounts['watch'] ?? null;
         $this->iphone_count = $this->allowedDeviceCounts['iphone'] ?? null;
+        $this->android_device_limit = $this->allowedDeviceCounts['android_device_limit'] ?? null;
     }
 }

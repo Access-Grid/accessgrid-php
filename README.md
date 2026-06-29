@@ -143,6 +143,7 @@ $template = $client->console->createTemplate([
    'allow_on_multiple_devices' => true,
    'watch_count' => 2,
    'iphone_count' => 3,
+   'android_device_limit' => 'single_device',
    'background_color' => '#FFFFFF',
    'label_color' => '#000000',
    'label_secondary_color' => '#333333',
@@ -169,6 +170,7 @@ $template = $client->console->updateTemplate([
    'allow_on_multiple_devices' => true,
    'watch_count' => 2,
    'iphone_count' => 3,
+   'android_device_limit' => 'single_device',
    'background_color' => '#FFFFFF',
    'label_color' => '#000000',
    'label_secondary_color' => '#333333',
@@ -198,6 +200,7 @@ echo "Name: {$template->name}\n";
 echo "Platform: {$template->platform}\n";
 echo "Protocol: {$template->protocol}\n";
 echo "Multi-device: {$template->allow_on_multiple_devices}\n";
+echo "Android device limit: {$template->android_device_limit}\n";
 ```
 
 ### Revealing a SmartTap Private Key
