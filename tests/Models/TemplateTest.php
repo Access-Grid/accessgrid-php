@@ -76,12 +76,14 @@ class TemplateTest extends TestCase
                 'allow_on_multiple_devices' => true,
                 'watch' => 2,
                 'iphone' => 3,
+                'android_device_limit' => 'all_devices',
             ],
         ]);
 
         $this->assertTrue($template->allow_on_multiple_devices);
         $this->assertEquals(2, $template->watch_count);
         $this->assertEquals(3, $template->iphone_count);
+        $this->assertEquals('all_devices', $template->android_device_limit);
     }
 
     public function testConvenienceAccessorsNullWhenMissing(): void
@@ -91,6 +93,7 @@ class TemplateTest extends TestCase
         $this->assertNull($template->allow_on_multiple_devices);
         $this->assertNull($template->watch_count);
         $this->assertNull($template->iphone_count);
+        $this->assertNull($template->android_device_limit);
         $this->assertNull($template->metadata);
     }
 
